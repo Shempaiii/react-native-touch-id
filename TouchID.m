@@ -80,7 +80,15 @@ RCT_EXPORT_METHOD(authenticate: (NSString *)reason
          }];
     }
     else {
-        if (error) {
+        if ([passcodeFallback boolValue]) {
+           // Attempt Authentification
+          [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
+                  localizedReason:reason
+                            reply:^(BOOL success, NSError *error)
+           {
+               [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
+           }];
+        } else if (error) {
             NSString *errorReason = [self getErrorReason:error];
             NSLog(@"Authentication failed: %@", errorReason);
             
