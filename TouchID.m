@@ -61,16 +61,30 @@ RCT_EXPORT_METHOD(authenticate: (NSString *)reason
 
     // Device has TouchID
     if ([context canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&error]) {
+        NSLog(@"Line 64 - biometricType %@", [self getBiometryType:context]);
         // Attempt Authentification
         [context evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics
                 localizedReason:reason
                           reply:^(BOOL success, NSError *error)
          {
-             [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
-         }];
+            NSLog(@"Line 70 - success %@", success ? @"Yes" : @"No");
+            NSLog(@"Line 71 - error %@", error);
+            if (success) {
+                [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
+            } else {
+                // Attempt Authentification
+                [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
+                        localizedReason:reason
+                                  reply:^(BOOL success, NSError *error)
+                 {
+                    [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
+                }];
+            }
+        }];
 
         // Device does not support TouchID but user wishes to use passcode fallback
     } else if ([passcodeFallback boolValue] && [context canEvaluatePolicy:LAPolicyDeviceOwnerAuthentication error:&error]) {
+        NSLog(@"Line 86");
         // Attempt Authentification
         [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
                 localizedReason:reason
@@ -80,16 +94,19 @@ RCT_EXPORT_METHOD(authenticate: (NSString *)reason
          }];
     }
     else {
+        NSLog(@"Line 97 %d", [passcodeFallback intValue]);
         if ([passcodeFallback boolValue]) {
-           // Attempt Authentification
-          [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
-                  localizedReason:reason
-                            reply:^(BOOL success, NSError *error)
-           {
-               [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
-           }];
-           return
+            NSLog(@"Line 99");
+            // Attempt Authentification
+            [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
+                    localizedReason:reason
+                              reply:^(BOOL success, NSError *error)
+             {
+                [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
+            }];
+            return;
         } else if (error) {
+            NSLog(@"Line 109");
             NSString *errorReason = [self getErrorReason:error];
             NSLog(@"Authentication failed: %@", errorReason);
             
