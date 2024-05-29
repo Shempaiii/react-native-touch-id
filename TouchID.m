@@ -88,6 +88,7 @@ RCT_EXPORT_METHOD(authenticate: (NSString *)reason
            {
                [self handleAttemptToUseDeviceIDWithSuccess:success error:error callback:callback];
            }];
+           return
         } else if (error) {
             NSString *errorReason = [self getErrorReason:error];
             NSLog(@"Authentication failed: %@", errorReason);
